@@ -70,4 +70,20 @@ public class RepertoirePersistenceAdapter implements RepertoireRepositoryPort {
         return repertoires.findById(id)
                 .map(entity -> mapper.toDomain(entity, moveNodes.findByRepertoireIdOrderByPlyAsc(id)));
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Repertoire> findAll() {
+        List<RepertoireEntity> entities = repertoires.findAll();
+        if (entities.isEmpty()) {
+            return List.of();
+        }
+        Map<UUID, List<MoveNodeEntity>> nodesByRepertoire = moveNodes
+                .findByRepertoireIdInOrderByPlyAsc(entities.stream().map(RepertoireEntity::getId).toList())
+                .stream()
+                .collect(Collectors.groupingBy(MoveNodeEntity::getRepertoireId));
+        return entities.stream()
+                .map(entity -> mapper.toDomain(entity, nodesByRepertoire.getOrDefault(entity.getId(), List.of())))
+                .toList();
+    }
 }
