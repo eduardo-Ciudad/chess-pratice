@@ -31,6 +31,21 @@ public class TrainingCard {
         return new TrainingCard(UUID.randomUUID(), CardSource.CASE, null, studyCaseId, ReviewState.initial(now));
     }
 
+    public static TrainingCard restore(UUID id, CardSource source, UUID moveNodeId, UUID studyCaseId,
+                                       ReviewState state) {
+        if (id == null || source == null || state == null) {
+            throw new IllegalArgumentException("Id, origem e estado do card são obrigatórios");
+        }
+        boolean consistent = switch (source) {
+            case REPERTOIRE -> moveNodeId != null && studyCaseId == null;
+            case CASE -> studyCaseId != null && moveNodeId == null;
+        };
+        if (!consistent) {
+            throw new IllegalArgumentException("A referência do card não corresponde à origem " + source);
+        }
+        return new TrainingCard(id, source, moveNodeId, studyCaseId, state);
+    }
+
     public void review(boolean correct, Instant now, SpacedRepetitionPolicy policy) {
         this.state = policy.next(state, correct, now);
     }
