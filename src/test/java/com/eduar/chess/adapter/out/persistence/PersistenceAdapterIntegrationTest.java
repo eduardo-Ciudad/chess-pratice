@@ -132,6 +132,25 @@ class PersistenceAdapterIntegrationTest {
     }
 
     @Test
+    @DisplayName("findAll carrega todos os repertórios com suas árvores")
+    void findAllLoadsEveryRepertoire() {
+        Repertoire white = Repertoire.create("Italiana", Side.WHITE);
+        white.addLine(line("e2e4", "e7e5", "g1f3"));
+        white.addLine(line("e2e4", "c7c5", "g1f3"));
+        Repertoire black = Repertoire.create("Pretas", Side.BLACK);
+        repertoireAdapter.save(white);
+        repertoireAdapter.save(black);
+        flushAndClear();
+
+        List<Repertoire> all = repertoireAdapter.findAll();
+
+        Repertoire loadedWhite = all.stream().filter(r -> r.getId().equals(white.getId())).findFirst().orElseThrow();
+        Repertoire loadedBlack = all.stream().filter(r -> r.getId().equals(black.getId())).findFirst().orElseThrow();
+        assertEquals(2, loadedWhite.lines().size());
+        assertTrue(loadedBlack.getRoots().isEmpty());
+    }
+
+    @Test
     @DisplayName("repertório inexistente devolve vazio")
     void unknownRepertoireIsEmpty() {
         assertTrue(repertoireAdapter.findById(UUID.randomUUID()).isEmpty());
